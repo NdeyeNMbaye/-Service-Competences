@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+
+  postgres-competencies:
+    image: postgres:15
+    container_name: postgres-competencies
+    environment:
+      POSTGRES_DB: competencesdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: passer
+    ports:
+      - "5434:5432"
+    networks:
+      - competencies-network
+
+  competencies-service:
+    image: ngoundje/competencies-service:latest
+    container_name: competencies-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8020:8020"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-competencies:5432/competencesdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: passer
+      DIPLOMAS_SERVICE_URL: http://diplomas-service:8082
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    depends_on:
+      - postgres-competencies
+    networks:
+      - competencies-network
+
+networks:
+  competencies-network:
+    driver: bridge
