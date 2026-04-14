@@ -28,7 +28,17 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/competences/**").permitAll()
+                        .requestMatchers(
+                                "/api-docs",
+                                "/api-docs/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/webjars/**"
+                        ).permitAll()
+                        .requestMatchers("/api/competences/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -37,11 +47,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    //  Ce bean empêche Spring de générer un mot de passe autom
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> new User(username, "", List.of());
     }
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

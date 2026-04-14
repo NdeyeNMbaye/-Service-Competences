@@ -1,14 +1,13 @@
 package com.groupeisi.competenciesservice.service;
 
+import com.groupeisi.competenciesservice.client.DiplomasClient;
 import com.groupeisi.competenciesservice.config.GraduateEventPublisher;
 import com.groupeisi.competenciesservice.dto.CompetenceDto;
 import com.groupeisi.competenciesservice.entities.CompetenceEntity;
 import com.groupeisi.competenciesservice.repository.CompetenceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,25 +18,15 @@ import java.util.stream.Collectors;
 public class CompetenceService {
 
     private final CompetenceRepository repository;
-    private final RestTemplate restTemplate;
+    private final DiplomasClient diplomasClient;
     private final GraduateEventPublisher eventPublisher;
-    @Value("${diplomas-service.url}")
-    private String diplomasServiceUrl;
 
     // CREATE
     public CompetenceDto create(CompetenceDto dto) {
         log.info("Vérification diplômé pour email : {}", dto.getUserEmail());
 
-        // Communication synchrone REST → diplomas-service
-        try {
-            restTemplate.getForObject(
-                    diplomasServiceUrl + "/api/diplomes/by-email?email=" + dto.getUserEmail(),
-                    Object.class
-            );
-            log.info("Diplômé trouvé pour email : {}", dto.getUserEmail());
-        } catch (Exception e) {
-            log.error("Diplômé introuvable pour email : {}", dto.getUserEmail());
-            throw new RuntimeException("Diplômé introuvable dans diplomas-service pour email : " + dto.getUserEmail());
+        if (!diplomasClient.diplomaExistsByEmail(dto.getUserEmail())) {
+            throw new RuntimeException("Diplômé introuvable pour email : " + dto.getUserEmail());
         }
 
         CompetenceEntity entity = CompetenceEntity.builder()
@@ -62,7 +51,7 @@ public class CompetenceService {
                 .collect(Collectors.toList());
     }
 
-    // READ - toutes
+    // READ all
     public List<CompetenceDto> getAll() {
         log.info("Récupération de toutes les compétences");
         return repository.findAll()

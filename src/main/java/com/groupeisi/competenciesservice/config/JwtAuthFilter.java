@@ -26,6 +26,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
+    // ✅ Ignorer les URLs Swagger
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api-docs") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/swagger-ui.html") ||
+                path.startsWith("/webjars");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -34,7 +45,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // ✅ LOGS TEMPORAIRES
         System.out.println("=== JWT FILTER ===");
         System.out.println("URL: " + request.getRequestURI());
         System.out.println("Auth Header: " + authHeader);
